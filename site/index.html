@@ -4,6 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Seceret project</title>
+    <link rel="icon" type="image/png" href="../images/slikca.png" />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
@@ -99,6 +100,7 @@
       const emailLink = document.getElementById('emailLink');
       const aboutLink = document.getElementById('aboutLink');
       const emailSection = document.getElementById('emailSection');
+      const emailCard = document.querySelector('.email-card');
       const emailInput = document.getElementById('emailInput');
       const emailForm = document.querySelector('.email-form');
       const emailBack = document.getElementById('emailBack');
@@ -208,7 +210,16 @@
       const scrollToEmail = (duration = 1500) => {
         cancelScrollAnim();
         const start = window.scrollY;
-        const target = emailSection ? emailSection.offsetTop : 0;
+        let target = emailSection ? emailSection.offsetTop : 0;
+        if (isMobileView()) {
+          if (emailBack) {
+            const backTop = window.scrollY + emailBack.getBoundingClientRect().top;
+            target = Math.max(0, backTop - (window.innerHeight - emailBack.offsetHeight - 20));
+          } else if (emailCard) {
+            const cardTop = window.scrollY + emailCard.getBoundingClientRect().top;
+            target = Math.max(0, cardTop - 16);
+          }
+        }
         const startTime = performance.now();
         const startY = -start;
         const ease = (t) => t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
