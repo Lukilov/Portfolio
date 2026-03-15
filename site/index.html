@@ -1,0 +1,626 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Seceret project</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="page">
+      <section class="left" id="leftPanel">
+        <header class="header">
+          <h1 class="typing pulse" data-text="Seceret project"></h1>
+          <div class="name-block">
+            <h2 class="typing delay" data-text="Luka Ilovar"></h2>
+          </div>
+        </header>
+
+        <section class="experience">
+          <div class="row">
+            <h3>Projects:</h3>
+            <div class="project-list">
+              <a class="project-card" href="https://play.google.com/store/apps/details?id=com.lukailovar.peso" target="_blank" rel="noreferrer">
+                <span class="project-name">Pe-So</span>
+                <span class="project-desc">your Personal Solution finance app</span>
+              </a>
+              <a class="project-card" href="https://lukilov.github.io/ThinkSlack/" target="_blank" rel="noreferrer">
+                <span class="project-name">ThinkSlack</span>
+                <span class="project-desc">your ai on steroids</span>
+              </a>
+              <a class="project-card" href="https://github.com/Lukilov/X-Tracker" target="_blank" rel="noreferrer">
+                <span class="project-name">X Tracker</span>
+                <span class="project-desc">track posts on X</span>
+              </a>
+            </div>
+          </div>
+        </section>
+
+        <footer class="footer-links">
+          <a href="https://www.instagram.com/luka_ilov/" target="_blank" rel="noreferrer">Instagram</a>
+          <a href="https://www.linkedin.com/in/luka-ilovar-84673b301/" target="_blank" rel="noreferrer">LinkedIn</a>
+          <button class="email-link" id="emailLink" type="button">Email</button>
+          <button class="email-link" id="aboutLink" type="button">About</button>
+        </footer>
+      </section>
+
+      <div class="right-placeholder"></div>
+    </div>
+
+    <div class="right-wrap" id="rightWrap">
+      <section class="right" id="rightPanel">
+        <div class="canvas-wrap">
+          <canvas id="ditherCanvas"></canvas>
+          <div class="grain"></div>
+        </div>
+      </section>
+    </div>
+
+    <div class="about-panel" id="aboutPanel">
+      <div class="about-content">
+        <h2>Welcome to the seceret project</h2>
+        <p>My name is Luka, a 20 year old from Slovenia.</p>
+        <p>I most enjoy exploring abandoned buildings or doing graffiti on them.</p>
+        <p>Railway workers don't really like me, because I run from them and jump on trains.</p>
+        <button class="back-btn" id="aboutBack" type="button">Back</button>
+      </div>
+    </div>
+
+    <section class="email-section" id="emailSection">
+      <div class="email-left">
+        <pre class="ascii-cube" id="asciiCube" aria-hidden="true"></pre>
+      </div>
+      <div class="email-right">
+        <div class="email-card">
+          <h2>Send me a message</h2>
+          <p>Drop your email and note. I will get back to you.</p>
+          <form class="email-form" id="contactForm">
+            <input type="hidden" name="_subject" value="New message from portfolio site" />
+            <input type="hidden" name="_template" value="table" />
+            <input type="hidden" name="_captcha" value="false" />
+            <input type="text" name="_honey" tabindex="-1" autocomplete="off" style="display:none" />
+            <label for="emailInput">Email</label>
+            <input id="emailInput" name="email" type="email" placeholder="you@email.com" required />
+            <label for="messageInput">Message</label>
+            <textarea id="messageInput" name="message" rows="4" placeholder="Write a short message..." required></textarea>
+            <button type="submit">Send</button>
+            <p id="formStatus" aria-live="polite"></p>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <button class="back-top" id="backTop" type="button">Go to seceret project</button>
+
+    <script>
+      const canvas = document.getElementById('ditherCanvas');
+      const ctx = canvas.getContext('2d');
+      const emailLink = document.getElementById('emailLink');
+      const aboutLink = document.getElementById('aboutLink');
+      const emailSection = document.getElementById('emailSection');
+      const emailInput = document.getElementById('emailInput');
+      const emailForm = document.querySelector('.email-form');
+      const formStatus = document.getElementById('formStatus');
+      const backTop = document.getElementById('backTop');
+      const rightWrap = document.getElementById('rightWrap');
+      const NAV_DURATION = 1500;
+      const FORMSUBMIT_ENDPOINT = 'https://formsubmit.co/ajax/luka@ilovar.eu';
+      let rightWrapX = 0;
+      let rightWrapY = 0;
+      let rightWrapAnim = null;
+      let scrollAnimRaf = null;
+      let backTopUnlocked = true;
+      let backTopUnlockTimer = null;
+
+      const applyRightWrapTransform = () => {
+        if (!rightWrap) return;
+        rightWrap.style.setProperty('--rw-x', `${rightWrapX}px`);
+        rightWrap.style.setProperty('--rw-y', `${rightWrapY}px`);
+      };
+      const syncRightWrapYWithScroll = () => {
+        rightWrapY = -window.scrollY;
+        applyRightWrapTransform();
+      };
+
+      const cancelScrollAnim = () => {
+        if (scrollAnimRaf) {
+          cancelAnimationFrame(scrollAnimRaf);
+          scrollAnimRaf = null;
+        }
+      };
+
+      const slideTo = (toLeft, onDone) => {
+        if (!rightWrap) return;
+        if (rightWrapAnim) rightWrapAnim.cancel();
+        const fromX = rightWrapX;
+        const toX = toLeft ? -window.innerWidth / 2 : 0;
+        rightWrapAnim = rightWrap.animate(
+          [
+            { transform: `translate(${fromX}px, ${rightWrapY}px)` },
+            { transform: `translate(${toX}px, ${rightWrapY}px)` }
+          ],
+          { duration: NAV_DURATION, easing: 'cubic-bezier(0.22, 0.61, 0.36, 1)', fill: 'forwards' }
+        );
+        rightWrapAnim.onfinish = () => {
+          const finishedAnim = rightWrapAnim;
+          rightWrapX = toX;
+          applyRightWrapTransform();
+          if (finishedAnim) finishedAnim.cancel();
+          rightWrapAnim = null;
+          if (onDone) onDone();
+        };
+      };
+      const aboutPanel = document.getElementById('aboutPanel');
+      const aboutBack = document.getElementById('aboutBack');
+      let aboutTransitioning = false;
+      let colorize = true;
+      const setAboutBackEnabled = (enabled) => {
+        if (!aboutBack) return;
+        aboutBack.disabled = !enabled;
+      };
+      setAboutBackEnabled(true);
+
+      const typeEl = (el, speed = 80) => new Promise((resolve) => {
+        const text = el.dataset.text || '';
+        let idx = 0;
+        el.textContent = '';
+        const tick = () => {
+          if (idx <= text.length) {
+            el.textContent = text.slice(0, idx);
+            idx += 1;
+            setTimeout(tick, speed);
+          } else {
+            resolve();
+          }
+        };
+        tick();
+      });
+
+      const runTyping = async () => {
+        const title = document.querySelector('.typing:not(.delay)');
+        const name = document.querySelector('.typing.delay');
+        if (title) await typeEl(title, 85);
+        if (name) await typeEl(name, 85);
+      };
+
+      runTyping();
+
+      const scrollToEmail = (duration = 1500) => {
+        cancelScrollAnim();
+        const start = window.scrollY;
+        const target = emailSection ? emailSection.offsetTop : 0;
+        const startTime = performance.now();
+        const startY = -start;
+        const ease = (t) => t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+        const step = (now) => {
+          const progress = Math.min(1, (now - startTime) / duration);
+          const eased = ease(progress);
+          const scrollY = start + (target - start) * eased;
+          window.scrollTo(0, scrollY);
+          rightWrapY = startY + ((-target) - startY) * eased;
+          applyRightWrapTransform();
+          if (progress < 1) {
+            scrollAnimRaf = requestAnimationFrame(step);
+          } else {
+            scrollAnimRaf = null;
+            rightWrapY = -target;
+            applyRightWrapTransform();
+          }
+        };
+        scrollAnimRaf = requestAnimationFrame(step);
+      };
+
+      const scrollToTop = (duration = 1500) => {
+        cancelScrollAnim();
+        const start = window.scrollY;
+        const startTime = performance.now();
+        const startY = -start;
+        const ease = (t) => t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+        const step = (now) => {
+          const progress = Math.min(1, (now - startTime) / duration);
+          const eased = ease(progress);
+          window.scrollTo(0, start * (1 - eased));
+          rightWrapY = startY * (1 - eased);
+          applyRightWrapTransform();
+          if (progress < 1) {
+            scrollAnimRaf = requestAnimationFrame(step);
+          } else {
+            scrollAnimRaf = null;
+            rightWrapY = 0;
+            applyRightWrapTransform();
+          }
+        };
+        scrollAnimRaf = requestAnimationFrame(step);
+      };
+
+      if (emailLink && emailSection) {
+        emailLink.addEventListener('click', (e) => {
+          e.preventDefault();
+          emailSection.classList.add('open');
+          lockBackTop();
+          hideBackTop();
+          scrollToEmail(NAV_DURATION);
+          unlockBackTopAfterDelay(NAV_DURATION + 250);
+          setTimeout(() => {
+            if (emailInput) emailInput.focus();
+          }, 600);
+        });
+      }
+
+      if (aboutLink && rightPanel) {
+        aboutLink.addEventListener('click', (e) => {
+          e.preventDefault();
+          if (aboutTransitioning) return;
+          aboutTransitioning = true;
+          setAboutBackEnabled(false);
+          colorize = true;
+          document.body.classList.remove('about-closing');
+          document.body.classList.add('about-open');
+          slideTo(true, () => {
+            aboutTransitioning = false;
+            setAboutBackEnabled(true);
+          });
+        });
+      }
+
+      if (aboutBack && rightPanel) {
+        aboutBack.addEventListener('click', () => {
+          if (aboutTransitioning) return;
+          aboutTransitioning = true;
+          setAboutBackEnabled(false);
+          slideTo(false, () => {
+            document.body.classList.remove('about-open');
+            document.body.classList.remove('about-closing');
+            aboutTransitioning = false;
+            setAboutBackEnabled(true);
+          });
+        });
+      }
+
+      // Keep classes; avoids end-of-transition blink
+
+      const hideBackTop = () => {
+        if (backTop) backTop.classList.remove('show');
+      };
+      const showBackTop = () => {
+        if (!backTopUnlocked) return;
+        if (!emailSection || !emailSection.classList.contains('open')) return;
+        if (backTop) backTop.classList.add('show');
+      };
+      const lockBackTop = () => {
+        backTopUnlocked = false;
+        if (backTopUnlockTimer) clearTimeout(backTopUnlockTimer);
+      };
+      const unlockBackTopAfterDelay = (delayMs) => {
+        if (backTopUnlockTimer) clearTimeout(backTopUnlockTimer);
+        backTopUnlockTimer = setTimeout(() => {
+          backTopUnlocked = true;
+          backTopUnlockTimer = null;
+        }, delayMs);
+      };
+
+      if (backTop) {
+        backTop.addEventListener('click', () => {
+          lockBackTop();
+          scrollToTop(NAV_DURATION);
+          emailSection.classList.remove('open');
+          hideBackTop();
+          unlockBackTopAfterDelay(0);
+        });
+      }
+
+      const blockScroll = (e) => {
+        e.preventDefault();
+      };
+
+      window.addEventListener('wheel', (e) => {
+        if (e.deltaY < 0) showBackTop();
+        blockScroll(e);
+      }, { passive: false });
+
+      let lastTouchY = null;
+      window.addEventListener('touchstart', (e) => {
+        if (e.touches && e.touches[0]) lastTouchY = e.touches[0].clientY;
+      }, { passive: true });
+
+      window.addEventListener('touchmove', (e) => {
+        if (e.touches && e.touches[0] && lastTouchY !== null) {
+          const dy = e.touches[0].clientY - lastTouchY;
+          if (dy > 0) showBackTop();
+        }
+        blockScroll(e);
+      }, { passive: false });
+
+      window.addEventListener('keydown', (e) => {
+        const keys = ['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' '];
+        if (keys.includes(e.key)) {
+          if (e.key === 'ArrowUp' || e.key === 'PageUp' || e.key === 'Home') showBackTop();
+          e.preventDefault();
+        }
+      });
+
+      if (emailForm) {
+        emailForm.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          if (formStatus) formStatus.textContent = 'Sending...';
+          const submitButton = emailForm.querySelector('button[type="submit"]');
+          if (submitButton) submitButton.disabled = true;
+
+          try {
+            const formData = new FormData(emailForm);
+            const response = await fetch(FORMSUBMIT_ENDPOINT, {
+              method: 'POST',
+              headers: {
+                Accept: 'application/json',
+              },
+              body: formData,
+            });
+
+            if (!response.ok) {
+              throw new Error('Request failed');
+            }
+
+            emailForm.reset();
+            if (formStatus) formStatus.textContent = 'Message sent.';
+          } catch (err) {
+            if (formStatus) formStatus.textContent = 'Sending failed. Try again.';
+          } finally {
+            if (submitButton) submitButton.disabled = false;
+          }
+        });
+      }
+
+      window.addEventListener('scroll', () => {
+        syncRightWrapYWithScroll();
+        if (window.scrollY === 0) hideBackTop();
+      });
+
+      // ASCII cube animation (left email panel)
+      const asciiCube = document.getElementById('asciiCube');
+      const W = 120;
+      const H = 60;
+      const CUBE_WIDTH = 1.6;
+      const DISTANCE_FROM_CAM = 4;
+      const K1 = 28;
+      const INCREMENT_SPEED = 0.012;
+      const FACE_CHARS = ['@', '$', '~', '#', ';', '+'];
+      const EDGE_CHAR = '+';
+      let A = 0, B = 0, C = 0;
+      // No email-driven morphing; always show the cube
+
+      const rotate3D = (i, j, k) => {
+        const x1 = i * Math.cos(C) - j * Math.sin(C);
+        const y1 = i * Math.sin(C) + j * Math.cos(C);
+        const z1 = k;
+        const y2 = y1 * Math.cos(A) - z1 * Math.sin(A);
+        const z2 = y1 * Math.sin(A) + z1 * Math.cos(A);
+        const x2 = x1;
+        const z3 = z2 * Math.cos(B) - x2 * Math.sin(B);
+        const x3 = z2 * Math.sin(B) + x2 * Math.cos(B);
+        const y3 = y2;
+        return [x3, y3, z3];
+      };
+
+      const renderAscii = () => {
+        if (!asciiCube) return;
+        const zbuf = Array(W * H).fill(0);
+        const chbuf = Array(W * H).fill(' ');
+
+        for (let face = 0; face < 6; face++) {
+          const ch = FACE_CHARS[face];
+          for (let u = -CUBE_WIDTH; u < CUBE_WIDTH; u += INCREMENT_SPEED) {
+            for (let v = -CUBE_WIDTH; v < CUBE_WIDTH; v += INCREMENT_SPEED) {
+              let i = 0, j = 0, k = 0;
+              switch (face) {
+                case 0: i = u; j = v; k = -CUBE_WIDTH; break;
+                case 1: i = CUBE_WIDTH; j = v; k = u; break;
+                case 2: i = -CUBE_WIDTH; j = v; k = -u; break;
+                case 3: i = -u; j = v; k = CUBE_WIDTH; break;
+                case 4: i = u; j = -CUBE_WIDTH; k = -v; break;
+                case 5: i = u; j = CUBE_WIDTH; k = v; break;
+              }
+              const [x3, y3, z3] = rotate3D(i, j, k);
+              const z = z3 + DISTANCE_FROM_CAM;
+              const ooz = 1 / z;
+              const xp = Math.floor(W / 2 + K1 * ooz * x3 * 2);
+              const yp = Math.floor(H / 2 + K1 * ooz * y3);
+              const idx = xp + yp * W;
+              if (xp >= 0 && xp < W && yp >= 0 && yp < H) {
+                if (ooz > zbuf[idx]) {
+                  zbuf[idx] = ooz;
+                  chbuf[idx] = ch;
+                }
+              }
+            }
+          }
+        }
+
+        const V = [
+          [-CUBE_WIDTH, -CUBE_WIDTH, -CUBE_WIDTH],
+          [ CUBE_WIDTH, -CUBE_WIDTH, -CUBE_WIDTH],
+          [ CUBE_WIDTH,  CUBE_WIDTH, -CUBE_WIDTH],
+          [-CUBE_WIDTH,  CUBE_WIDTH, -CUBE_WIDTH],
+          [-CUBE_WIDTH, -CUBE_WIDTH,  CUBE_WIDTH],
+          [ CUBE_WIDTH, -CUBE_WIDTH,  CUBE_WIDTH],
+          [ CUBE_WIDTH,  CUBE_WIDTH,  CUBE_WIDTH],
+          [-CUBE_WIDTH,  CUBE_WIDTH,  CUBE_WIDTH],
+        ];
+        const EDGES = [
+          [0,1],[1,2],[2,3],[3,0], [4,5],[5,6],[6,7],[7,4], [0,4],[1,5],[2,6],[3,7]
+        ];
+        const EDGE_STEPS = 160;
+        for (const [a, b] of EDGES) {
+          const [x0, y0, z0] = V[a];
+          const [x1, y1, z1] = V[b];
+          const [X0, Y0, Z0_] = rotate3D(x0, y0, z0);
+          const [X1, Y1, Z1_] = rotate3D(x1, y1, z1);
+          const Z0 = Z0_ + DISTANCE_FROM_CAM;
+          const Z1 = Z1_ + DISTANCE_FROM_CAM;
+          for (let s = 0; s <= EDGE_STEPS; s++) {
+            const t = s / EDGE_STEPS;
+            const x = X0 + (X1 - X0) * t;
+            const y = Y0 + (Y1 - Y0) * t;
+            const z = Z0 + (Z1 - Z0) * t;
+            const ooz = 1 / z;
+            const xp = Math.floor(W / 2 + K1 * ooz * x * 2);
+            const yp = Math.floor(H / 2 + K1 * ooz * y);
+            const idx = xp + yp * W;
+            if (xp >= 0 && xp < W && yp >= 0 && yp < H) {
+              if (ooz > zbuf[idx]) {
+                zbuf[idx] = ooz + 1e-6;
+                chbuf[idx] = EDGE_CHAR;
+              }
+            }
+          }
+        }
+
+
+        let out = '';
+        for (let y = 0; y < H; y++) {
+          out += chbuf.slice(y * W, (y + 1) * W).join('') + '\\n';
+        }
+        asciiCube.textContent = out;
+      };
+
+      const tick = () => {
+        A += 0.03;
+        B += 0.02;
+        C += 0.01;
+        renderAscii();
+        requestAnimationFrame(tick);
+      };
+
+      if (asciiCube) tick();
+
+      const image = new Image();
+      image.src = 'images/slika1.jpg';
+
+      const off = document.createElement('canvas');
+      const offCtx = off.getContext('2d');
+
+      const bayer4 = [
+        [0, 8, 2, 10],
+        [12, 4, 14, 6],
+        [3, 11, 1, 9],
+        [15, 7, 13, 5],
+      ];
+
+      let imgData = null;
+      let imgW = 0;
+      let imgH = 0;
+      let frameId = null;
+
+      const resize = () => {
+        const rect = canvas.parentElement.getBoundingClientRect();
+        canvas.width = Math.floor(rect.width);
+        canvas.height = Math.floor(rect.height);
+        if (image.complete) {
+          prepareImage();
+        }
+      };
+
+      function prepareImage() {
+        const cW = canvas.width;
+        const cH = canvas.height;
+        if (cW === 0 || cH === 0) return;
+
+        const imgRatio = image.width / image.height;
+        const canvasRatio = cW / cH;
+        let drawW = cW;
+        let drawH = cH;
+        let offsetX = 0;
+        let offsetY = 0;
+
+        // "Cover" for full-bleed, with a slight right bias to keep the face centered
+        const biasX = -0.06; // negative = shift image to the right (show more left side)
+        if (imgRatio > canvasRatio) {
+          drawW = cH * imgRatio;
+          offsetX = (cW - drawW) / 2 + (cW * biasX);
+        } else {
+          drawH = cW / imgRatio;
+          offsetY = (cH - drawH) / 2;
+        }
+
+        off.width = cW;
+        off.height = cH;
+        offCtx.clearRect(0, 0, cW, cH);
+        offCtx.drawImage(image, offsetX, offsetY, drawW, drawH);
+        imgData = offCtx.getImageData(0, 0, cW, cH);
+        imgW = cW;
+        imgH = cH;
+      }
+
+      const hslToRgb = (h, s, l) => {
+        s /= 100;
+        l /= 100;
+        const k = n => (n + h / 30) % 12;
+        const a = s * Math.min(l, 1 - l);
+        const f = n => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+        return [Math.round(255 * f(0)), Math.round(255 * f(8)), Math.round(255 * f(4))];
+      };
+
+      const getColors = () => {
+        if (!colorize) {
+          return {
+            back: hslToRgb(0, 0, 95),
+            front: hslToRgb(0, 0, 35),
+          };
+        }
+        return {
+          back: hslToRgb(0, 0, 95),
+          front: hslToRgb(220, 100, 70),
+        };
+      };
+
+      const render = (t) => {
+        if (!imgData) return;
+        const { back, front } = getColors();
+        const pxSize = 4;
+        const timeShift = (Math.sin(t * 0.001) + 1) * 0.12;
+
+        ctx.fillStyle = `rgb(${back[0]}, ${back[1]}, ${back[2]})`;
+        ctx.fillRect(0, 0, imgW, imgH);
+
+        for (let y = 0; y < imgH; y += pxSize) {
+          for (let x = 0; x < imgW; x += pxSize) {
+            const i = (y * imgW + x) * 4;
+            const r = imgData.data[i];
+            const g = imgData.data[i + 1];
+            const b = imgData.data[i + 2];
+            let lum = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+            // soften contrast so the face is less defined
+            lum = Math.min(1, Math.max(0, (lum - 0.5) * 0.85 + 0.5));
+
+            const bx = (x / pxSize) % 4;
+            const by = (y / pxSize) % 4;
+            const threshold = (bayer4[by][bx] / 16) + timeShift;
+
+            if (lum < threshold) {
+              ctx.fillStyle = `rgb(${front[0]}, ${front[1]}, ${front[2]})`;
+              ctx.fillRect(x, y, pxSize, pxSize);
+            }
+          }
+        }
+
+        frameId = requestAnimationFrame(render);
+      };
+
+      image.onload = () => {
+        syncRightWrapYWithScroll();
+        resize();
+        prepareImage();
+        if (frameId) cancelAnimationFrame(frameId);
+        frameId = requestAnimationFrame(render);
+      };
+
+      window.addEventListener('resize', () => {
+        if (document.body.classList.contains('about-open') && rightWrapX < 0) {
+          rightWrapX = -window.innerWidth / 2;
+          applyRightWrapTransform();
+        }
+        resize();
+        prepareImage();
+      });
+    </script>
+  </body>
+</html>
