@@ -87,6 +87,7 @@
             <p id="formStatus" aria-live="polite"></p>
           </form>
         </div>
+        <button class="email-back-btn" id="emailBack" type="button">Nazaj</button>
       </div>
     </section>
 
@@ -100,6 +101,7 @@
       const emailSection = document.getElementById('emailSection');
       const emailInput = document.getElementById('emailInput');
       const emailForm = document.querySelector('.email-form');
+      const emailBack = document.getElementById('emailBack');
       const formStatus = document.getElementById('formStatus');
       const backTop = document.getElementById('backTop');
       const rightWrap = document.getElementById('rightWrap');
@@ -111,13 +113,22 @@
       let scrollAnimRaf = null;
       let backTopUnlocked = true;
       let backTopUnlockTimer = null;
+      let emailLockTimer = null;
+      const MOBILE_BREAKPOINT = 1100;
+      const isMobileView = () => window.innerWidth <= MOBILE_BREAKPOINT;
 
       const applyRightWrapTransform = () => {
         if (!rightWrap) return;
+        if (isMobileView()) {
+          rightWrap.style.removeProperty('--rw-x');
+          rightWrap.style.removeProperty('--rw-y');
+          return;
+        }
         rightWrap.style.setProperty('--rw-x', `${rightWrapX}px`);
         rightWrap.style.setProperty('--rw-y', `${rightWrapY}px`);
       };
       const syncRightWrapYWithScroll = () => {
+        if (isMobileView()) return;
         rightWrapY = -window.scrollY;
         applyRightWrapTransform();
       };
@@ -128,12 +139,21 @@
           scrollAnimRaf = null;
         }
       };
+      const getSlideDistance = () => {
+        if (!rightWrap) return window.innerWidth / 2;
+        const wrapWidth = rightWrap.getBoundingClientRect().width;
+        return wrapWidth > 0 ? wrapWidth : window.innerWidth / 2;
+      };
 
       const slideTo = (toLeft, onDone) => {
         if (!rightWrap) return;
+        if (isMobileView()) {
+          if (onDone) onDone();
+          return;
+        }
         if (rightWrapAnim) rightWrapAnim.cancel();
         const fromX = rightWrapX;
-        const toX = toLeft ? -window.innerWidth / 2 : 0;
+        const toX = toLeft ? -getSlideDistance() : 0;
         rightWrapAnim = rightWrap.animate(
           [
             { transform: `translate(${fromX}px, ${rightWrapY}px)` },
@@ -210,7 +230,7 @@
         scrollAnimRaf = requestAnimationFrame(step);
       };
 
-      const scrollToTop = (duration = 1500) => {
+      const scrollToTop = (duration = 1500, onDone) => {
         cancelScrollAnim();
         const start = window.scrollY;
         const startTime = performance.now();
@@ -228,18 +248,32 @@
             scrollAnimRaf = null;
             rightWrapY = 0;
             applyRightWrapTransform();
+            if (onDone) onDone();
           }
         };
         scrollAnimRaf = requestAnimationFrame(step);
       };
 
+      const setEmailOpen = (isOpen) => {
+        if (emailSection) emailSection.classList.toggle('open', isOpen);
+      };
+      const setEmailScrollLock = (isLocked) => {
+        document.body.classList.toggle('email-open', isLocked);
+      };
+
       if (emailLink && emailSection) {
         emailLink.addEventListener('click', (e) => {
           e.preventDefault();
-          emailSection.classList.add('open');
+          setEmailOpen(true);
+          setEmailScrollLock(false);
+          if (emailLockTimer) clearTimeout(emailLockTimer);
           lockBackTop();
           hideBackTop();
           scrollToEmail(NAV_DURATION);
+          emailLockTimer = setTimeout(() => {
+            setEmailScrollLock(true);
+            emailLockTimer = null;
+          }, NAV_DURATION + 60);
           unlockBackTopAfterDelay(NAV_DURATION + 250);
           setTimeout(() => {
             if (emailInput) emailInput.focus();
@@ -298,15 +332,26 @@
           backTopUnlockTimer = null;
         }, delayMs);
       };
+      const closeEmailSection = () => {
+        lockBackTop();
+        if (emailLockTimer) {
+          clearTimeout(emailLockTimer);
+          emailLockTimer = null;
+        }
+        setEmailScrollLock(false);
+        scrollToTop(NAV_DURATION, () => {
+          setEmailOpen(false);
+        });
+        hideBackTop();
+        unlockBackTopAfterDelay(0);
+      };
 
       if (backTop) {
-        backTop.addEventListener('click', () => {
-          lockBackTop();
-          scrollToTop(NAV_DURATION);
-          emailSection.classList.remove('open');
-          hideBackTop();
-          unlockBackTopAfterDelay(0);
-        });
+        backTop.addEventListener('click', closeEmailSection);
+      }
+
+      if (emailBack) {
+        emailBack.addEventListener('click', closeEmailSection);
       }
 
       const blockScroll = (e) => {
@@ -314,6 +359,7 @@
       };
 
       window.addEventListener('wheel', (e) => {
+        if (isMobileView()) return;
         if (e.deltaY < 0) showBackTop();
         blockScroll(e);
       }, { passive: false });
@@ -324,6 +370,7 @@
       }, { passive: true });
 
       window.addEventListener('touchmove', (e) => {
+        if (isMobileView()) return;
         if (e.touches && e.touches[0] && lastTouchY !== null) {
           const dy = e.touches[0].clientY - lastTouchY;
           if (dy > 0) showBackTop();
@@ -332,6 +379,7 @@
       }, { passive: false });
 
       window.addEventListener('keydown', (e) => {
+        if (isMobileView()) return;
         const keys = ['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' '];
         if (keys.includes(e.key)) {
           if (e.key === 'ArrowUp' || e.key === 'PageUp' || e.key === 'Home') showBackTop();
@@ -531,14 +579,27 @@
         let offsetX = 0;
         let offsetY = 0;
 
-        // "Cover" for full-bleed, with a slight right bias to keep the face centered
-        const biasX = -0.06; // negative = shift image to the right (show more left side)
-        if (imgRatio > canvasRatio) {
-          drawW = cH * imgRatio;
-          offsetX = (cW - drawW) / 2 + (cW * biasX);
+        if (isMobileView()) {
+          // On smaller screens keep the whole image visible.
+          if (imgRatio > canvasRatio) {
+            drawW = cW;
+            drawH = cW / imgRatio;
+            offsetY = (cH - drawH) / 2;
+          } else {
+            drawH = cH;
+            drawW = cH * imgRatio;
+            offsetX = (cW - drawW) / 2;
+          }
         } else {
-          drawH = cW / imgRatio;
-          offsetY = (cH - drawH) / 2;
+          // "Cover" for full-bleed, with a slight right bias to keep the face centered
+          const biasX = -0.06; // negative = shift image to the right (show more left side)
+          if (imgRatio > canvasRatio) {
+            drawW = cH * imgRatio;
+            offsetX = (cW - drawW) / 2 + (cW * biasX);
+          } else {
+            drawH = cW / imgRatio;
+            offsetY = (cH - drawH) / 2;
+          }
         }
 
         off.width = cW;
@@ -614,8 +675,17 @@
       };
 
       window.addEventListener('resize', () => {
+        if (isMobileView()) {
+          rightWrapX = 0;
+          rightWrapY = 0;
+          if (rightWrapAnim) {
+            rightWrapAnim.cancel();
+            rightWrapAnim = null;
+          }
+          applyRightWrapTransform();
+        }
         if (document.body.classList.contains('about-open') && rightWrapX < 0) {
-          rightWrapX = -window.innerWidth / 2;
+          rightWrapX = -getSlideDistance();
           applyRightWrapTransform();
         }
         resize();
