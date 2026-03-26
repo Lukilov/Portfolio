@@ -631,6 +631,10 @@ body.about-closing .about-panel {
     min-height: 118px;
     padding: 16px;
     border-radius: 12px;
+    align-items: center;
+    justify-content: flex-start;
+    padding-top: 20px;
+    text-align: center;
   }
 
   .footer-links a,
@@ -717,6 +721,7 @@ body.about-closing .about-panel {
     flex-basis: 100%;
     min-height: 110px;
     padding: 15px 14px;
+    padding-top: 19px;
     gap: 8px;
   }
 
