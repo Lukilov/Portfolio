@@ -19,8 +19,10 @@ body {
   overflow-x: hidden;
 }
 
-body.email-open {
-  overflow: hidden;
+@media (min-width: 1101px) {
+  body.email-open {
+    overflow: hidden;
+  }
 }
 
 html {
@@ -29,6 +31,7 @@ html {
 
 .page {
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   background: var(--bg);
   position: relative;
@@ -56,6 +59,7 @@ html {
   right: 0;
   width: 50vw;
   height: 100vh;
+  height: 100dvh;
   z-index: 40;
   --rw-x: 0px;
   --rw-y: 0px;
@@ -323,6 +327,7 @@ body.about-closing .about-panel {
 
 .email-section.open {
   min-height: 100vh;
+  min-height: 100dvh;
   height: auto;
   gap: 28px;
   padding: 44px clamp(16px, 4vw, 48px);
@@ -452,7 +457,7 @@ body.about-closing .about-panel {
   color: var(--fg);
   padding: 10px 12px;
   font-family: inherit;
-  font-size: 14px;
+  font-size: 16px;
   outline: none;
 }
 
@@ -468,7 +473,7 @@ body.about-closing .about-panel {
   color: var(--fg);
   padding: 10px 12px;
   font-family: inherit;
-  font-size: 14px;
+  font-size: 16px;
   cursor: pointer;
   transition: background 0.2s ease, color 0.2s ease;
 }
@@ -542,7 +547,7 @@ body.about-closing .about-panel {
   .page {
     display: block;
     min-height: auto;
-    margin-top: clamp(240px, 46vh, 420px);
+    margin-top: clamp(200px, 40svh, 340px);
   }
 
   .left,
@@ -554,8 +559,10 @@ body.about-closing .about-panel {
 
   .left {
     min-height: auto;
-    gap: 28px;
+    gap: 36px;
     padding: 34px 22px 30px;
+    padding-left: max(22px, env(safe-area-inset-left));
+    padding-right: max(22px, env(safe-area-inset-right));
     align-items: center;
     text-align: center;
     max-width: 760px;
@@ -567,7 +574,7 @@ body.about-closing .about-panel {
   }
 
   .right {
-    min-height: clamp(240px, 46vh, 420px);
+    min-height: clamp(200px, 40svh, 340px);
   }
 
   .right-wrap {
@@ -577,12 +584,14 @@ body.about-closing .about-panel {
     bottom: auto;
     left: 0;
     z-index: 1;
-    height: clamp(240px, 46vh, 420px);
+    height: clamp(200px, 40svh, 340px);
     transform: none !important;
   }
 
   .about-panel {
     padding: 30px 20px;
+    padding-left: max(20px, env(safe-area-inset-left));
+    padding-right: max(20px, env(safe-area-inset-right));
   }
 
   .about-content {
@@ -597,6 +606,7 @@ body.about-closing .about-panel {
     font-size: 16px;
     width: 100%;
     max-width: 420px;
+    margin-top: 10px;
   }
 
   .project-list,
@@ -610,6 +620,10 @@ body.about-closing .about-panel {
   .project-list {
     width: 100%;
     max-width: 420px;
+  }
+
+  .experience {
+    margin-top: 6px;
   }
 
   .project-card {
@@ -654,6 +668,9 @@ body.about-closing .about-panel {
     flex-direction: column;
     gap: 18px;
     padding: 24px 16px 34px;
+    padding-left: max(16px, env(safe-area-inset-left));
+    padding-right: max(16px, env(safe-area-inset-right));
+    padding-bottom: max(34px, env(safe-area-inset-bottom));
   }
 
   .email-left,
@@ -676,7 +693,9 @@ body.about-closing .about-panel {
 @media (max-width: 640px) {
   .left {
     padding: 24px 16px 22px;
-    gap: 20px;
+    padding-left: max(16px, env(safe-area-inset-left));
+    padding-right: max(16px, env(safe-area-inset-right));
+    gap: 28px;
     max-width: 480px;
   }
 
@@ -713,6 +732,7 @@ body.about-closing .about-panel {
   .footer-links {
     gap: 10px;
     max-width: 360px;
+    margin-top: 8px;
   }
 
   .footer-links a,
@@ -736,5 +756,16 @@ body.about-closing .about-panel {
 
   .ascii-cube {
     transform: scale(0.68);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pulse,
+  .grain,
+  .project-card,
+  .email-card,
+  .email-left {
+    animation: none !important;
+    transition: none !important;
   }
 }
